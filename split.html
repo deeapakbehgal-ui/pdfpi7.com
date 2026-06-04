@@ -1,87 +1,59 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Split PDF Tool - PDFPi7</title>
+<title>Split PDF Tool</title>
+
+<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 
 <style>
 body{
 font-family:Arial,sans-serif;
 background:#f5f5f5;
 margin:0;
-padding:0;
 }
 
 .header{
 background:#0d6efd;
 color:white;
+padding:20px;
 text-align:center;
-padding:60px 20px;
-}
-
-.header h1{
-font-size:50px;
-margin:0;
-}
-
-.header p{
-font-size:20px;
-margin-top:20px;
 }
 
 .container{
-max-width:900px;
-margin:50px auto;
+max-width:800px;
+margin:30px auto;
 background:white;
-padding:40px;
-border-radius:20px;
-box-shadow:0 5px 15px rgba(0,0,0,.1);
+padding:25px;
+border-radius:10px;
+box-shadow:0 2px 10px rgba(0,0,0,.1);
 }
 
 .upload{
-border:3px dashed #0d6efd;
-padding:60px 20px;
+border:2px dashed #0d6efd;
+padding:40px;
 text-align:center;
-border-radius:20px;
+border-radius:10px;
 }
 
-.upload h2{
-font-size:40px;
-margin-bottom:30px;
-}
-
-input[type=file]{
-margin:20px 0;
-font-size:18px;
-}
-
-input[type=number]{
+input{
 padding:10px;
-width:120px;
-font-size:18px;
-margin-top:20px;
+margin-top:10px;
 }
 
 button{
 background:#0d6efd;
 color:white;
 border:none;
-padding:15px 40px;
-font-size:24px;
-border-radius:8px;
+padding:12px 25px;
+border-radius:6px;
 cursor:pointer;
-margin-top:25px;
+margin-top:15px;
 }
 
-button:hover{
-opacity:.9;
-}
-
-#pages{
-font-size:24px;
-margin-top:20px;
-font-weight:bold;
+#downloadBtn{
+display:none;
 }
 </style>
 </head>
@@ -90,48 +62,101 @@ font-weight:bold;
 
 <div class="header">
 <h1>Split PDF Tool</h1>
-<p>Extract specific pages from your PDF file</p>
+<p>Extract pages from PDF easily</p>
 </div>
 
 <div class="container">
-
 <div class="upload">
 
 <h2>Select PDF File</h2>
 
 <input type="file" id="pdfFile" accept=".pdf">
 
-<div id="pages"></div>
+<br><br>
 
+<label>Page Number:</label>
 <br>
 
-<label><b>Page Number:</b></label><br>
 <input type="number" id="pageNumber" min="1">
 
-<br>
+<br><br>
 
 <button onclick="splitPDF()">Split PDF</button>
 
-</div>
+<br>
 
+<button id="downloadBtn">
+Download PDF
+</button>
+
+</div>
 </div>
 
 <script>
-document.getElementById("pdfFile").addEventListener("change", function(){
-document.getElementById("pages").innerHTML =
-"PDF Selected Successfully";
-});
 
-function splitPDF(){
-let page=document.getElementById("pageNumber").value;
+let splitPdfBytes;
 
-if(page==""){
+async function splitPDF(){
+
+const file=document.getElementById("pdfFile").files[0];
+
+if(!file){
+alert("Select PDF First");
+return;
+}
+
+const pageNumber=parseInt(
+document.getElementById("pageNumber").value
+);
+
+if(!pageNumber){
 alert("Enter Page Number");
 return;
 }
 
-alert("PDF Split Function Coming Soon");
+const bytes=await file.arrayBuffer();
+
+const pdfDoc=await PDFLib.PDFDocument.load(bytes);
+
+const totalPages=pdfDoc.getPageCount();
+
+if(pageNumber<1 || pageNumber>totalPages){
+alert("Invalid Page Number");
+return;
 }
+
+const newPdf=await PDFLib.PDFDocument.create();
+
+const [page]=await newPdf.copyPages(
+pdfDoc,
+[pageNumber-1]
+);
+
+newPdf.addPage(page);
+
+splitPdfBytes=await newPdf.save();
+
+document.getElementById("downloadBtn").style.display="inline-block";
+
+alert("PDF Split Successfully");
+}
+
+document.getElementById("downloadBtn").onclick=function(){
+
+const blob=new Blob(
+[splitPdfBytes],
+{type:"application/pdf"}
+);
+
+const link=document.createElement("a");
+
+link.href=URL.createObjectURL(blob);
+
+link.download="split.pdf";
+
+link.click();
+};
+
 </script>
 
 </body>

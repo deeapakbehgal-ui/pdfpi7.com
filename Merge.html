@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Merge PDF Tool</title>
+<title>Merge PDF Tool - PDFPi7</title>
 
 <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 
@@ -13,34 +13,63 @@ font-family:Arial,sans-serif;
 background:#f5f5f5;
 margin:0;
 }
+
 .header{
 background:#0d6efd;
 color:white;
-padding:20px;
 text-align:center;
+padding:60px 20px;
 }
+
+.header h1{
+font-size:48px;
+margin:0;
+}
+
+.header p{
+font-size:20px;
+margin-top:10px;
+}
+
 .container{
-max-width:800px;
-margin:30px auto;
+max-width:900px;
+margin:40px auto;
 background:white;
-padding:25px;
-border-radius:10px;
+padding:30px;
+border-radius:15px;
 box-shadow:0 2px 10px rgba(0,0,0,.1);
 }
+
 .upload{
-border:2px dashed #0d6efd;
-padding:40px;
+border:3px dashed #0d6efd;
+padding:50px 20px;
 text-align:center;
-border-radius:10px;
+border-radius:15px;
 }
+
+input[type=file]{
+margin:20px 0;
+}
+
 button{
 background:#0d6efd;
 color:white;
 border:none;
-padding:12px 20px;
-border-radius:6px;
-margin-top:15px;
+padding:14px 30px;
+font-size:18px;
+border-radius:8px;
 cursor:pointer;
+margin:10px;
+}
+
+button:hover{
+opacity:.9;
+}
+
+#status{
+margin-top:20px;
+font-weight:bold;
+font-size:18px;
 }
 </style>
 </head>
@@ -63,11 +92,20 @@ cursor:pointer;
 
 <button onclick="mergePDFs()">Merge PDFs</button>
 
+<button id="downloadBtn" style="display:none;">
+Download PDF
+</button>
+
+<div id="status"></div>
+
 </div>
 </div>
 
 <script>
-async function mergePDFs() {
+
+let mergedBlob = null;
+
+async function mergePDFs(){
 
 const files = document.getElementById('pdfFiles').files;
 
@@ -76,11 +114,15 @@ alert('Please select at least 2 PDF files');
 return;
 }
 
+document.getElementById('status').innerHTML =
+'Processing... Please wait';
+
 const mergedPdf = await PDFLib.PDFDocument.create();
 
 for(const file of files){
 
 const bytes = await file.arrayBuffer();
+
 const pdf = await PDFLib.PDFDocument.load(bytes);
 
 const pages = await mergedPdf.copyPages(
@@ -93,16 +135,31 @@ pages.forEach(page => mergedPdf.addPage(page));
 
 const mergedBytes = await mergedPdf.save();
 
-const blob = new Blob(
+mergedBlob = new Blob(
 [mergedBytes],
 {type:'application/pdf'}
 );
 
-const link = document.createElement('a');
-link.href = URL.createObjectURL(blob);
-link.download = 'merged.pdf';
-link.click();
+document.getElementById('status').innerHTML =
+'PDF Merged Successfully';
+
+document.getElementById('downloadBtn').style.display =
+'inline-block';
 }
+
+document.getElementById('downloadBtn')
+.addEventListener('click', function(){
+
+const link = document.createElement('a');
+
+link.href = URL.createObjectURL(mergedBlob);
+
+link.download = 'merged.pdf';
+
+link.click();
+
+});
+
 </script>
 
 </body>

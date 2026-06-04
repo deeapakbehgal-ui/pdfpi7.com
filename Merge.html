@@ -1,25 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Merge PDF Tool</title>
+
+<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 
 <style>
 body{
 font-family:Arial,sans-serif;
 background:#f5f5f5;
 margin:0;
-padding:0;
 }
-
 .header{
 background:#0d6efd;
 color:white;
 padding:20px;
 text-align:center;
 }
-
 .container{
 max-width:800px;
 margin:30px auto;
@@ -28,29 +27,24 @@ padding:25px;
 border-radius:10px;
 box-shadow:0 2px 10px rgba(0,0,0,.1);
 }
-
 .upload{
 border:2px dashed #0d6efd;
 padding:40px;
 text-align:center;
 border-radius:10px;
 }
-
 button{
 background:#0d6efd;
 color:white;
 border:none;
 padding:12px 20px;
-border-radius:5px;
+border-radius:6px;
 margin-top:15px;
 cursor:pointer;
 }
-
-button:hover{
-opacity:.9;
-}
 </style>
 </head>
+
 <body>
 
 <div class="header">
@@ -59,21 +53,57 @@ opacity:.9;
 </div>
 
 <div class="container">
-
 <div class="upload">
+
 <h2>Select PDF Files</h2>
 
-<input type="file" multiple accept=".pdf">
+<input type="file" id="pdfFiles" multiple accept=".pdf">
 
 <br>
 
-<button onclick="alert('PDF Merge Function Coming Soon')">
-Merge PDFs
-</button>
+<button onclick="mergePDFs()">Merge PDFs</button>
 
 </div>
-
 </div>
+
+<script>
+async function mergePDFs() {
+
+const files = document.getElementById('pdfFiles').files;
+
+if(files.length < 2){
+alert('Please select at least 2 PDF files');
+return;
+}
+
+const mergedPdf = await PDFLib.PDFDocument.create();
+
+for(const file of files){
+
+const bytes = await file.arrayBuffer();
+const pdf = await PDFLib.PDFDocument.load(bytes);
+
+const pages = await mergedPdf.copyPages(
+pdf,
+pdf.getPageIndices()
+);
+
+pages.forEach(page => mergedPdf.addPage(page));
+}
+
+const mergedBytes = await mergedPdf.save();
+
+const blob = new Blob(
+[mergedBytes],
+{type:'application/pdf'}
+);
+
+const link = document.createElement('a');
+link.href = URL.createObjectURL(blob);
+link.download = 'merged.pdf';
+link.click();
+}
+</script>
 
 </body>
 </html>

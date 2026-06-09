@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF to JPG</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<style>
+body{
+font-family:Arial,sans-serif;
+text-align:center;
+padding:20px;
+background:#f5f5f5;
+}
+.container{
+max-width:700px;
+margin:auto;
+background:#fff;
+padding:20px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+button{
+padding:10px 20px;
+margin-top:10px;
+cursor:pointer;
+}
+img{
+max-width:100%;
+margin-top:15px;
+border:1px solid #ddd;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h2>PDF to JPG Converter</h2>
+
+<input type="file" id="pdfFile" accept="application/pdf">
+<br>
+<button onclick="convertPDF()">Convert</button>
+
+<div id="output"></div>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+async function convertPDF() {
+
+const file = document.getElementById('pdfFile').files[0];
+
+if (!file) {
+alert('Please select a PDF file');
+return;
+}
+
+const arrayBuffer = await file.arrayBuffer();
+const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+
+const output = document.getElementById('output');
+output.innerHTML = '';
+
+for(let pageNum = 1; pageNum <= pdf.numPages; pageNum++){
+
+const page = await pdf.getPage(pageNum);
+
+const viewport = page.getViewport({scale: 2});
+
+const canvas = document.createElement('canvas');
+const context = canvas.getContext('2d');
+
+canvas.width = viewport.width;
+canvas.height = viewport.height;
+
+await page.render({
+canvasContext: context,
+viewport: viewport
+}).promise;
+
+const img = document.createElement('img');
+img.src = canvas.toDataURL('image/jpeg', 0.9);
+
+output.appendChild(document.createElement('hr'));
+output.appendChild(img);
+
+const link = document.createElement('a');
+link.href = img.src;
+link.download = `page-${pageNum}.jpg`;
+link.innerHTML = `<br>Download Page ${pageNum}`;
+output.appendChild(link);
+}
+}
+</script>
+
+</body>
+</html>
